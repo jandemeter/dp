@@ -152,18 +152,57 @@ scp win7_64_bit.iso user@<IP_SERVERA>:/home/user/
 
 ---
 
-## 9. Oprava audio konfigurácie
+## 9. Vytvorenie konfiguračného templatu s vypnutým audio
+
+Zvuková karta vo virtuálke spôsobuje, že Windows pri štarte spadne. Treba ju vypnúť. Robí sa to v konfiguračnom súbore, ktorý DRAKVUF používa na vytváranie virtuálok.
+
+Tento súbor sa štandardne vytvorí až pri prvom pokuse o inštaláciu VM — takže ten by zlyhal. Preto si súbor pripravíme vopred už s vypnutým zvukom.
+
+### Postup
 
 ```bash
-sudo sed -i "s/^audio = 1/#audio = 1/" /etc/drakrun/cfg.template
-sudo sed -i "s/^soundhw=/#soundhw=/" /etc/drakrun/cfg.template
+sudo mkdir -p /etc/drakrun
 
-# Overiť zmenu
-grep "audio\|sound" /etc/drakrun/cfg.template
+sudo tee /etc/drakrun/cfg.template > /dev/null << 'EOF'
+# DomU config template for DRAKVUF Sandbox
+# This is the template used to generate DomU configuration instances.
+# Please don't edit this file unless you know what you are doing.
+arch = 'x86_64'
+name = "{{ VM_NAME }}"
+maxmem = {{ MEMORY }}
+memory = {{ MEMORY }}
+vcpus = {{ VCPUS }}
+maxvcpus = {{ VCPUS }}
+type = "hvm"
+boot = "cd"
+hap = 1
+acpi = 1
+on_poweroff = "destroy"
+on_reboot = "{{ ON_REBOOT }}"
+on_crash = "destroy"
+vnc=1
+vnclisten="0.0.0.0:{{ VM_ID }},websocket={{ VNC_PORT }}"
+vncpasswd="{{ VNC_PASS }}"
+usb = 1
+usbdevice = "tablet"
+altp2m = 2
+shadow_memory = 32
+#audio = 1
+#soundhw='hda'
+cpuid="host,htt=0"
+vga="stdvga"
+vif = [ 'type=ioemu,model=e1000,bridge={{ BRIDGE_NAME }}' ]
+disk = [ {{ DISKS }} ]
+serial = [ "unix:/var/run/drakrun/{{ VM_NAME }}.sock,server,nowait" ]
+#uncomment when using IPT
+#vmtrace_buf_kb = 8192
+EOF
+
+# Overiť, že audio riadky sú zakomentované
+grep -E "audio|sound" /etc/drakrun/cfg.template
 # #audio = 1
 # #soundhw='hda'
 ```
-
 ---
 
 ## 10. Inštalácia Windows 7 VM
@@ -185,6 +224,11 @@ Výstup:
 Initial VM setup is complete and the vm-0 was launched.
 Please now VNC to the port 5900 on this machine.
 Your configured VNC password is: xxxxxxxx
+```
+`vncviewer` nainštalujete:
+
+```bash
+sudo apt install -y tigervnc-viewer
 ```
 
 Pripojenie na VNC (z iného PC v sieti alebo cez SSH tunel):
@@ -259,15 +303,3 @@ Karton mikroservisa `karton_drakvuf_consumer.py` beží na hlavnom serveri (kde 
 # V karton_drakvuf_consumer.py zmeňte
 self.drakvuf_base = "http://<IP_DRAKVUF_SERVERA>:5000"
 ```
-
-Tým mikroservisa posiela vzorky na vzdialený DRAKVUF server cez REST API, zatiaľ čo výsledky ukladá do lokálneho MWDB.
-
-
-## Prehľad portov
-
-| Port | Služba |
-|------|--------|
-| 5000 | DRAKVUF web UI |
-| 5900 | VNC – Windows VM (počas inštalácie) |
-| 6379 | Redis (DRAKVUF) |
-| 22 | SSH |
