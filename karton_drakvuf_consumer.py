@@ -68,7 +68,6 @@ class DrakvufConsumer(Karton):
             self.log.error(f"DRAKVUF submission failed: {response.status_code} {response.text}")
             return
 
-        # API vracia task_uid nie analysis_id
         task_uid = response.json().get("task_uid")
         self.log.info(f"Submitted to DRAKVUF, task_uid: {task_uid}")
 
@@ -77,7 +76,6 @@ class DrakvufConsumer(Karton):
             return
 
         # Cakaj na vysledok
-        # GET /api/status/{task_uid} vracia {"id": ..., "status": ..., "time_started": ..., "time_ended": ...}
         while True:
             try:
                 r = requests.get(f"{self.drakvuf_base}/api/status/{task_uid}")
