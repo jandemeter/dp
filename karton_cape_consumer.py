@@ -13,7 +13,8 @@ class CAPEConsumer(Karton):
     filters = [
         {
             "type": "sample",
-            "stage": "recognized"
+            "stage": "recognized",
+            "kind": "runnable"
         }
     ]
 
@@ -36,7 +37,7 @@ class CAPEConsumer(Karton):
 
     def process(self, task: Task):
         sample = task.get_resource("sample")
-        filename = task.headers.get("filename", "sample")
+        filename = sample.name or task.headers.get("filename", "sample")
 
         self.log.info(f"Submitting sample: {filename}")
 
@@ -106,7 +107,7 @@ class CAPEConsumer(Karton):
             # rozbalenej vzorky, ktora v MWDB neexistuje -> Object not found.
             sha256 = hashlib.sha256(sample.content).hexdigest()
 
-            mwdb_file = self.mwdb.upload_file(name=filename, content=sample.content)
+            mwdb_file = self.mwdb.query_file(sha256)
 
             cape_url = f"{self.cape_base}/analysis/{task_id}/"
             target_file = report.get("target", {}).get("file", {})
