@@ -72,6 +72,9 @@ Pre prehliadanie už nahraných vzoriek sa v hornej navigácii klikne na položk
 
 Kliknutím na ľubovoľnú vzorku sa otvorí **detail vzorky**. Detail obsahuje karty:
 
+![Detail analýzy v CAPE](images/cape-detail.png)
+
+
 - **Details** — základné informácie, hashe (MD5, SHA1, SHA256, SHA512), veľkosť, typ súboru, dátum nahratia a používateľ, ktorý vzorku nahral.
 - **Relations** — strom rodičovských a odvodených vzoriek.
 - **Preview** — hex/ASCII náhľad obsahu súboru.
@@ -114,7 +117,13 @@ Po odoslaní CAPE vygeneruje **Task ID** a presmeruje na stránku s detailom úl
 
 Pre prehľad dokončených a bežiacich analýz sa v hornej navigácii klikne na položku **Recent**. Zobrazí sa tabuľka analýz.
 
-Kliknutím na riadok analýzy (na ID alebo názov súboru) sa otvorí **detail analýzy**.
+![Prehľad analýz v CAPE](images/cape_recent.png)
+
+
+Kliknutím na riadok analýzy (na ID alebo názov súboru) sa otvorí **detail analýzy**:
+
+![Detail vzorky v MWDB](images/mwdb-detail.png)
+
 
 ---
 
@@ -149,6 +158,8 @@ Tabuľka obsahuje stĺpce:
 - **State** — stav analýzy (`pending`, `running`, `finished`, `fatal_error`).
 - **Score** — celkové skóre 0–10 zobrazené farebnou bublinkou (zelená/žltá/červená podľa miery rizika).
 
-Kliknutím na riadok analýzy sa otvorí **detail analýzy**.
+Kliknutím na riadok analýzy sa otvorí **detail analýzy**:
+
+![Detail analýzy v Cuckoo3](images/cuckoo3-detail.png)
 
 ---
