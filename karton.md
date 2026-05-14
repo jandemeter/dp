@@ -22,7 +22,29 @@ sudo docker-compose up
 
 ---
 
-## 2. Webové rozhrania po spustení
+## 2. Inštalácia karton-archive-extractor
+
+Karton Playground v základnej zostave neobsahuje mikroslužbu na automatické rozbaľovanie archívov. Vzorky malvéru sú však často ako ZIP archívy chránené heslom `infected`. Aby pipeline dokázal automaticky spracovať aj takéto vstupy, je potrebné doinštalovať mikroslužbu `karton-archive-extractor`.
+
+```bash
+cd ~/karton-playground
+python3 -m venv venv
+source venv/bin/activate
+pip install karton-archive-extractor
+```
+
+Pred spustením je potrebné mať v pracovnom adresári konfiguračný súbor `karton.ini`:
+
+```bash
+cp config/karton.ini ./karton.ini
+karton-archive-extractor
+```
+
+Po spustení sa služba zaregistruje s filtrom `{"type": "sample", "stage": "recognized", "kind": "archive"}` a automaticky preberá úlohy, ktoré klasifikátor označí ako archív. Extrahované súbory následne publikuje späť do pipeline ako samostatné úlohy, ktoré pokračujú štandardnou cestou cez `karton-classifier`.
+
+---
+
+## 3. Webové rozhrania po spustení
 
 Po úspešnom spustení sú dostupné tri rozhrania:
 
@@ -34,7 +56,7 @@ Po úspešnom spustení sú dostupné tri rozhrania:
 
 ---
 
-## 3. Konfiguračný súbor `karton.ini`
+## 4. Konfiguračný súbor `karton.ini`
 
 Každá vlastná mikroslužba potrebuje prístup ku Karton infraštruktúre. Tento prístup je definovaný v súbore `karton.ini`, ktorý je súčasťou Karton Playground a obsahuje connection string na Redis a MinIO:
 
@@ -46,7 +68,7 @@ Súbor je potrebné mať v pracovnom adresári mikroslužby pri jej spustení.
 
 ---
 
-## 4. Architektúra mikroslužby pre sandbox
+## 5. Architektúra mikroslužby pre sandbox
 
 Každá mikroslužba, ktorá napája sandbox na Karton pipeline, sleduje rovnaký vzor:
 
@@ -60,9 +82,9 @@ Mikroslužba pristupuje k sandboxu výlučne cez jeho existujúce REST API – n
 
 ---
 
-## 5. Implementácia mikroslužby
+## 6. Implementácia mikroslužby
 
-### 5.1 Definícia triedy a filtrov
+### 6.1 Definícia triedy a filtrov
 
 Mikroslužba je Python trieda, ktorá dedí zo základnej triedy `Karton`. Atribút `identity` jednoznačne identifikuje službu a `filters` určuje, aké úlohy má služba prijímať:
 
@@ -71,12 +93,12 @@ from karton.core import Karton
 
 class SandboxConsumer(Karton):
     identity = "karton.mojsandbox-consumer"
-    filters = [{"type": "sample", "stage": "recognized"}]
+    filters = [{"type": "sample", "stage": "recognized", "kind": "runnable"}]
 ```
 
-Filter `{"type": "sample", "stage": "recognized"}` znamená, že mikroslužba spracováva iba vzorky, ktoré už boli rozpoznané klasifikátorom.
+Filter `{"type": "sample", "stage": "recognized", "kind": "runnable"}` znamená, že mikroslužba spracováva iba spustiteľné vzorky (PE, EXE, DLL), ktoré už boli rozpoznané klasifikátorom. Vďaka atribútu `kind: runnable` sa zabezpečí, že archívy nepôjdu priamo do sandboxu, ale najprv prejdú cez `karton-archive-extractor`.
 
-### 5.2 Spracovanie úlohy
+### 6.2 Spracovanie úlohy
 
 Logika spracovania sa implementuje v metóde `process()`. Vzorku dočasne uložíme na disk a odošleme cez REST API sandboxu:
 
@@ -102,7 +124,7 @@ def process(self, task):
 
 > **Poznámka:** Niektoré sandboxy (napríklad Cuckoo 3) vyžadujú API token v hlavičke `Authorization`. Iné (CAPE, DRAKVUF) v predvolenej konfigurácii žiadnu autentifikáciu nepotrebujú.
 
-### 5.3 Polling stavu analýzy
+### 6.3 Polling stavu analýzy
 
 Keďže analýza v sandboxe prebieha asynchrónne, musíme periodicky kontrolovať jej stav:
 
@@ -119,7 +141,7 @@ while True:
 
 Interval pollingu je vhodné prispôsobiť rýchlosti sandboxu.
 
-### 5.4 Zápis výsledkov do MWDB
+### 6.4 Zápis výsledkov do MWDB
 
 Po dokončení analýzy získame report a kľúčové údaje uložíme do MWDB ako atribúty súboru:
 
@@ -139,14 +161,13 @@ mwdb_file.add_comment(
 )
 ```
 
-### 5.5 Príprava atribútov v MWDB
+### 6.5 Príprava atribútov v MWDB
 
-5.5 Príprava atribútov v MWDB
-Atribúty (mojsandbox-task-id, mojsandbox-url, mojsandbox-score, ...) musia byť vopred vytvorené v MWDB cez Admin UI (Admin → User Settings → Attributes). Inak zápis cez API zlyhá.
+Atribúty (`mojsandbox-task-id`, `mojsandbox-url`, `mojsandbox-score`, ...) musia byť vopred vytvorené v MWDB cez Admin UI (Admin → User Settings → Attributes). Inak zápis cez API zlyhá.
 
 ---
 
-## 6. Kompletná šablóna mikroslužby
+## 7. Kompletná šablóna mikroslužby
 
 ```python
 import os
@@ -157,7 +178,7 @@ from mwdblib import MWDB
 
 class SandboxConsumer(Karton):
     identity = "karton.mojsandbox-consumer"
-    filters = [{"type": "sample", "stage": "recognized"}]
+    filters = [{"type": "sample", "stage": "recognized", "kind": "runnable"}]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -222,7 +243,7 @@ if __name__ == "__main__":
 
 ---
 
-## 7. Spustenie mikroslužby
+## 8. Spustenie mikroslužby
 
 V adresári s `karton.ini` a skriptom mikroslužby:
 
