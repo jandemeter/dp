@@ -355,6 +355,28 @@ poetry run pip uninstall pillow -y
 poetry run pip install pillow olefile --upgrade
 ```
 
+```bash
+poetry run pip install certvalidator asn1crypto mscerts
+poetry run pip install -U git+https://github.com/DissectMalware/batch_deobfuscator
+poetry run pip install -U git+https://github.com/CAPESandbox/httpreplay
+```
+
+### 11.1 Patch oscrypto pre OpenSSL 3.x
+
+Ubuntu 24.04 dodáva OpenSSL 3.x, s ktorým staršia verzia Python knižnice
+`oscrypto` nie je kompatibilná. Bez tohto patch-u sa `modules.processing.CAPE` zlyhá nahrať a payload
+klasifikácia (memory unpacking detection, malware family identification)
+v reportoch chýba.
+
+```bash
+cd ~/CAPEv2
+poetry run pip install --force-reinstall --no-deps \
+  'oscrypto @ git+https://github.com/wbond/oscrypto.git@d5f3437'
+```
+
+> **Pozor:** Flag `--force-reinstall` je nutný, lebo pip inak detekuje
+> rovnaké číslo verzie a inštaláciu preskočí — patch by sa nedostal na disk.
+
 ---
 
 ## 12. Inštalácia community signatures
@@ -363,13 +385,14 @@ poetry run pip install pillow olefile --upgrade
 
 ```bash
 cd ~/CAPEv2
-poetry run python utils/community.py -waf
+poetry run python utils/community.py -wafs
 ```
 
 Príznaky:
 - `-w` — stiahnuť všetky moduly
 - `-a` — aplikovať
 - `-f` — vynútiť prepis existujúcich súborov
+- `-s` — explicitne stiahnuť signatures
 
 Skript stiahne signatures, YARA pravidlá a processing moduly do `modules/signatures/`, `data/yara/` a `modules/processing/`.
 
@@ -405,9 +428,9 @@ cd ~/CAPEv2
 poetry run python utils/process.py auto --disable-memory-limit
 ```
 
-Tento proces je **kritický** — bez neho analýzy ostanú zaseknuté v stave `reported` a CAPE nevygeneruje finálny `report.json`. Worker spracováva surové výstupy, aplikuje signatures, vyhodnocuje YARA pravidlá a generuje finálny report.
+Tento proces je **kritický** — bez neho analýzy ostanú zaseknuté v stave `completed` a CAPE nevygeneruje finálny `report.json`. Worker spracováva surové výstupy, aplikuje signatures, vyhodnocuje YARA pravidlá a generuje finálny report.
 
-> **Poznámka:** Prepínač `--disable-memory-limit` je potrebný pri analýze väčších vzoriek alebo na strojoch s obmedzenou RAM (worker by inak skončil s OOM chybou).
+> **Poznámka:** Prepínač `--disable-memory-limit` vypína kontrolu maximálnej veľkosti analýzy. Bez neho budú väčšie analýzy preskakované.
 
 ### 13.3 Terminál 3 — webové rozhranie
 
