@@ -30,7 +30,7 @@ Analytik nahrá vzorku do MWDB Core, odkiaľ ju Karton automaticky distribuuje p
 
 ## Používanie
 
-Po úspešnej inštalácii všetkých komponentov je systém pripravený na používanie. Postup pri nahrávaní vzoriek, pridávaní atribútov v MWDB Core a prehliadaní výsledkov analýz v MWDB Core, CAPE Sandbox a Cuckoo3 je popísaný v [používateľskej príručke](pouzivatelska_prirucka.md).
+Po úspešnej inštalácii všetkých komponentov je systém pripravený na používanie. Postup pri nahrávaní vzoriek, pridávaní atribútov v MWDB Core a prehliadaní výsledkov analýz v MWDB Core, CAPE Sandbox, Cuckoo3 a DRAKVUF Sandbox je popísaný v [používateľskej príručke](pouzivatelska_prirucka.md).
 
 ## Použité technológie
 
