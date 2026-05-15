@@ -16,6 +16,9 @@ Táto príručka popisuje základnú prácu s troma nástrojmi, ktoré tvoria ja
 3. [Cuckoo3](#3-cuckoo3)
    3.1 [Odoslanie vzorky na analýzu](#31-odoslanie-vzorky-na-analýzu)
    3.2 [Zobrazenie detailu analýzy](#32-zobrazenie-detailu-analýzy)
+4. [DRAKVUF Sandbox](#4-drakvuf-sandbox)
+   4.1 [Odoslanie vzorky na analýzu](#41-odoslanie-vzorky-na-analýzu)
+   4.2 [Zobrazenie detailu analýzy](#42-zobrazenie-detailu-analýzy)
 
 ---
 
@@ -159,5 +162,49 @@ Tabuľka obsahuje stĺpce:
 Kliknutím na riadok analýzy sa otvorí **detail analýzy**:
 
 ![Detail analýzy v Cuckoo3](images/cuckoo3-detail.png)
+
+---
+
+## 4. DRAKVUF Sandbox
+
+DRAKVUF Sandbox poskytuje webové rozhranie **DRAKVUF web Sandbox** s ľavým bočným panelom rozdeleným do dvoch sekcií. Sekcia **ANALYSIS** obsahuje položky **Analyses** a **Upload sample**, sekcia **SANDBOX** položky **API docs** a **RQ Dashboard** (rozhranie Redis Queue na sledovanie pracovných úloh).
+
+### 4.1 Odoslanie vzorky na analýzu
+
+Pre odoslanie novej vzorky sa v ľavom paneli klikne na položku **Upload sample**. Otvorí sa formulár **Upload sample**:
+
+![Nahratie vzorky v DRAKVUF Sandbox](images/drakvuf-upload.png)
+
+Postup:
+
+1. V poli **Sample file** sa tlačidlom **Browse...** vyberie vzorka z disku.
+2. Posuvníkom **Analysis time** sa nastaví dĺžka analýzy (predvolene 10 minút).
+3. V poli **Plugins** je možné upraviť zoznam aktívnych DRAKVUF pluginov.
+4. Voliteľne sa vyplnia polia:
+   - **Target file name** — názov, pod ktorým bude vzorka uložená vo VM (predvolene sa zvolí automaticky podľa typu súboru).
+   - **Target file path** — cesta vo VM, kam sa vzorka skopíruje pred spustením.
+   - **Start command** — vlastný príkaz na spustenie vzorky (užitočné napr. pre DLL súbory cez `rundll32.exe`).
+5. V dolnej časti sú tri voliteľné prepínače:
+   - **Disable Internet access** — vypne sieťový prístup vo VM (užitočné pre vzorky, ktoré by mohli komunikovať s C2 serverom).
+   - **Disable screenshots** — zakáže snímanie obrazovky počas analýzy.
+   - **Extract archive** — automaticky rozbalí nahraný archív pred analýzou.
+6. Odoslanie sa potvrdí modrým tlačidlom **Submit**.
+
+### 4.2 Zobrazenie detailu analýzy
+
+Pre prehľad odoslaných analýz sa v ľavom paneli klikne na položku **Analyses**. Zobrazí sa tabuľka so všetkými analýzami:
+
+![Prehľad analýz v DRAKVUF Sandbox](images/drakvuf-analyses.png)
+
+Tabuľka obsahuje stĺpce:
+
+- **Analysis ID** — identifikátor analýzy vo formáte UUID. Pri každom zázname je farebný štítok stavu (`pending`, `running`, `finished`, `failed`).
+- **Sample info** — informácie o vzorke: SHA256 hash, pôvodný názov súboru a typ súboru detegovaný cez `file`.
+- **Started** — čas spustenia úlohy.
+- **Finished** — čas dokončenia úlohy.
+
+Kliknutím na Analysis ID sa otvorí **detail analýzy** na stránke **Analysis report**:
+
+![Detail analýzy v DRAKVUF Sandbox](images/drakvuf-detail.png)
 
 ---
