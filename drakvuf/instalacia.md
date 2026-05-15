@@ -125,7 +125,7 @@ IP adresa bude z rozsahu `192.168.122.0/24` (štandardná libvirt sieť).
 **[HOST]** Prvé pripojenie cez SSH:
 
 ```bash
-ssh drakvuf@192.168.122.162
+ssh drakvuf-host@192.168.122.162
 # Pri prvom pripojení potvrdiť fingerprint: yes
 # Heslo: to čo ste zadali pri inštalácii
 ```
@@ -155,7 +155,7 @@ exit
 **[HOST]** Znovu pripojiť:
 
 ```bash
-ssh drakvuf@192.168.122.162
+ssh drakvuf-host@192.168.122.162
 ```
 
 **[DRAKVUF-HOST VM]** Overenie nested virtualizácie — kritický krok:
@@ -249,7 +249,7 @@ SSH session sa ukončí. VM sa reštartuje a tentokrát nabootuje cez Xen hyperv
 **[HOST]** Počkajte 30–60 sekúnd a znovu sa pripojte:
 
 ```bash
-ssh drakvuf@192.168.122.162
+ssh drakvuf-host@192.168.122.162
 ```
 
 **[DRAKVUF-HOST VM]** Overenie že Xen beží:
