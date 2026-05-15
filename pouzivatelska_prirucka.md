@@ -21,8 +21,6 @@ Táto príručka popisuje základnú prácu s troma nástrojmi, ktoré tvoria ja
 
 ## 1. MWDB
 
-**MWDB (Malware Database)** je centrálne úložisko vzoriek a metadát.
-
 ### 1.1 Nahratie vzorky
 
 Pre manuálne nahratie sa v hornej navigácii klikne na položku **Upload**. Otvorí sa stránka **File upload**:
