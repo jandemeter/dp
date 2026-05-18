@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
 ## 9. Spustenie mikroslužby
 
-V adresári so symlinkom na `karton.ini` a skriptom mikroslužby:
+V pracovnom adresári mikroslužby (so symlinkom na karton.ini a predtým vytvoreným venv) spustíme skript:
 
 ```bash
 cd ~/karton-services
