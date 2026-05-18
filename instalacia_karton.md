@@ -2,14 +2,13 @@
 
 ## 1. Inštalácia Karton Playground
 
-### 1.1 Predpoklady – inštalácia Gitu a Dockeru
+### 1.1 Predpoklady – inštalácia Gitu, Dockeru a Pythonu"
 
-Pred samotnou inštaláciou Karton Playground je potrebné mať na systéme nainštalovaný Git a Docker Compose plugin. Pre Ubuntu/Debian:
+Pred samotnou inštaláciou Karton Playground je potrebné mať na systéme nainštalovaný Git, Docker s Compose pluginom a Python s podporou virtuálnych prostredí. Pre Ubuntu 24.04:
 
 ```bash
 sudo apt update
-sudo apt install -y git
-sudo apt-get install docker-compose-plugin
+sudo apt install -y git docker.io docker-compose-v2 python3-venv
 ```
 
 ### 1.2 Klonovanie a spustenie
@@ -17,26 +16,39 @@ sudo apt-get install docker-compose-plugin
 ```bash
 git clone https://github.com/CERT-Polska/karton-playground.git
 cd karton-playground
-sudo docker-compose up
+sudo docker compose up -d
 ```
 
 ---
 
-## 2. Inštalácia karton-archive-extractor
+## 2. Príprava Python prostredia pre mikroslužby
+ 
+V adresári `~/karton-services` vytvoríme spoločné Python virtuálne prostredie pre všetky mikroslužby:
+ 
+```bash
+mkdir -p ~/karton-services
+cd ~/karton-services
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install karton-core mwdblib requests
+```
+---
+
+## 3. Inštalácia karton-archive-extractor
 
 Karton Playground v základnej zostave neobsahuje mikroslužbu na automatické rozbaľovanie archívov. Vzorky malvéru sú však často ako ZIP archívy chránené heslom `infected`. Aby pipeline dokázal automaticky spracovať aj takéto vstupy, je potrebné doinštalovať mikroslužbu `karton-archive-extractor`.
 
 ```bash
-cd ~/karton-playground
-python3 -m venv venv
+cd ~/karton-services
 source venv/bin/activate
 pip install karton-archive-extractor
 ```
 
-Pred spustením je potrebné mať v pracovnom adresári konfiguračný súbor `karton.ini`:
+Pred spustením je potrebné mať v pracovnom adresári symlink na konfiguračný súbor `karton.ini`:
 
 ```bash
-cp config/karton.ini ./karton.ini
+ln -s ~/karton-playground/config/karton.ini ./karton.ini
 karton-archive-extractor
 ```
 
@@ -44,7 +56,7 @@ Po spustení sa služba zaregistruje s filtrom `{"type": "sample", "stage": "rec
 
 ---
 
-## 3. Webové rozhrania po spustení
+## 4. Webové rozhrania po spustení
 
 Po úspešnom spustení sú dostupné tri rozhrania:
 
@@ -56,19 +68,12 @@ Po úspešnom spustení sú dostupné tri rozhrania:
 
 ---
 
-## 4. Konfiguračný súbor `karton.ini`
+## 5. Konfiguračný súbor `karton.ini`
 
-Každá vlastná mikroslužba potrebuje prístup ku Karton infraštruktúre. Tento prístup je definovaný v súbore `karton.ini`, ktorý je súčasťou Karton Playground a obsahuje connection string na Redis a MinIO:
+Každá vlastná mikroslužba potrebuje prístup ku Karton infraštruktúre. Tento prístup je definovaný v súbore `karton.ini`, ktorý je súčasťou Karton Playground a obsahuje connection string na Redis a MinIO. V pracovnom adresári mikroslužby (`~/karton-services/`) musí byť na tento súbor vytvorený symlink, aby ho `karton-core` našiel pri štarte.
 
-```bash
-cp ~/karton-playground/config/karton.ini ~/moja-mikrosluzba/
-```
 
-Súbor je potrebné mať v pracovnom adresári mikroslužby pri jej spustení.
-
----
-
-## 5. Architektúra mikroslužby pre sandbox
+## 6. Architektúra mikroslužby pre sandbox
 
 Každá mikroslužba, ktorá napája sandbox na Karton pipeline, sleduje rovnaký vzor:
 
@@ -82,9 +87,9 @@ Mikroslužba pristupuje k sandboxu výlučne cez jeho existujúce REST API – n
 
 ---
 
-## 6. Implementácia mikroslužby
+## 7. Implementácia mikroslužby
 
-### 6.1 Definícia triedy a filtrov
+### 7.1 Definícia triedy a filtrov
 
 Mikroslužba je Python trieda, ktorá dedí zo základnej triedy `Karton`. Atribút `identity` jednoznačne identifikuje službu a `filters` určuje, aké úlohy má služba prijímať:
 
@@ -98,7 +103,7 @@ class SandboxConsumer(Karton):
 
 Filter `{"type": "sample", "stage": "recognized", "kind": "runnable"}` znamená, že mikroslužba spracováva iba spustiteľné vzorky (PE, EXE, DLL), ktoré už boli rozpoznané klasifikátorom. Vďaka atribútu `kind: runnable` sa zabezpečí, že archívy nepôjdu priamo do sandboxu, ale najprv prejdú cez `karton-archive-extractor`.
 
-### 6.2 Spracovanie úlohy
+### 7.2 Spracovanie úlohy
 
 Logika spracovania sa implementuje v metóde `process()`. Vzorku dočasne uložíme na disk a odošleme cez REST API sandboxu:
 
@@ -124,7 +129,7 @@ def process(self, task):
 
 > **Poznámka:** Niektoré sandboxy (napríklad Cuckoo 3) vyžadujú API token v hlavičke `Authorization`. Iné (CAPE, DRAKVUF) v predvolenej konfigurácii žiadnu autentifikáciu nepotrebujú.
 
-### 6.3 Polling stavu analýzy
+### 7.3 Polling stavu analýzy
 
 Keďže analýza v sandboxe prebieha asynchrónne, musíme periodicky kontrolovať jej stav:
 
@@ -141,7 +146,7 @@ while True:
 
 Interval pollingu je vhodné prispôsobiť rýchlosti sandboxu.
 
-### 6.4 Zápis výsledkov do MWDB
+### 7.4 Zápis výsledkov do MWDB
 
 Po dokončení analýzy získame report a kľúčové údaje uložíme do MWDB ako atribúty súboru:
 
@@ -161,13 +166,13 @@ mwdb_file.add_comment(
 )
 ```
 
-### 6.5 Príprava atribútov v MWDB
+### 7.5 Príprava atribútov v MWDB
 
 Atribúty (`mojsandbox-task-id`, `mojsandbox-url`, `mojsandbox-score`, ...) musia byť vopred vytvorené v MWDB cez Admin UI (Admin → User Settings → Attributes). Inak zápis cez API zlyhá.
 
 ---
 
-## 7. Kompletná šablóna mikroslužby
+## 8. Kompletná šablóna mikroslužby
 
 ```python
 import os
@@ -243,12 +248,14 @@ if __name__ == "__main__":
 
 ---
 
-## 8. Spustenie mikroslužby
+## 9. Spustenie mikroslužby
 
-V adresári s `karton.ini` a skriptom mikroslužby:
+V adresári so symlinkom na `karton.ini` a skriptom mikroslužby:
 
 ```bash
-python3 karton_mojsandbox_consumer.py
+cd ~/karton-services
+source venv/bin/activate
+python karton_mojsandbox_consumer.py
 ```
 
 Po spustení sa mikroslužba automaticky zaregistruje v Karton systéme a v Karton Dashboarde sa zobrazí ako aktívna služba (napríklad `karton.mojsandbox-consumer`).
